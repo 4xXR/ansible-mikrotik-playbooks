@@ -1,0 +1,14 @@
+- name: Set comment on a MikroTik interface
+  hosts: mikrotik
+  gather_facts: no
+  connection: network_cli
+
+  vars:
+    interface_name: ether1
+    new_comment: "Connected to ISP"
+
+  tasks:
+    - name: Apply comment to interface
+      community.routeros.command:
+        commands:
+          - '/interface/set [find where name={{ interface_name }}] comment="{{ new_comment }}"'

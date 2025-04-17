@@ -1,0 +1,15 @@
+- name: Show MikroTik interfaces
+  hosts: mikrotik
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: Get interfaces
+      community.routeros.command:
+        commands:
+          - '/interface/print'
+      register: result
+
+    - name: Show result
+      debug:
+        var: result.stdout_lines

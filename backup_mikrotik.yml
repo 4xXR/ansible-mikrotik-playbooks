@@ -1,0 +1,17 @@
+- name: Backup MikroTik configuration
+  hosts: mikrotik
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: Export configuration and store in variable
+      community.routeros.command:
+        commands:
+          - '/export'
+      register: backup_output
+
+    - name: Save backup as local file
+      copy:
+        content: "{{ backup_output.stdout[0] }}"
+        dest: "./mikrotik-backup-{{ inventory_hostname }}-{{ lookup('pipe', 'date +%F') }}.rsc"
+      delegate_to: localhost

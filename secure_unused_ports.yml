@@ -1,0 +1,20 @@
+- name: Secure unused MikroTik ports
+  hosts: mikrotik
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: Get all interfaces
+      community.routeros.command:
+        commands:
+          - '/interface/print without-paging'
+      register: interfaces_output
+
+    - name: Show retrieved interfaces
+      debug:
+        var: interfaces_output.stdout_lines
+
+    - name: Disable unused ports (except ether1 and wlan1)
+      community.routeros.command:
+        commands:
+          - '/interface/disable [find where running=no && name~"ether[2-5]"]'
