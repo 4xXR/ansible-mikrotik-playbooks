@@ -1,0 +1,46 @@
+- name: Backup configuration from MikroTik and pfSense
+  hosts: all
+  gather_facts: no
+
+  vars:
+    backup_folder: "backups/{{ lookup('pipe', 'date +%F') }}"
+
+  pre_tasks:
+    - name: Ensure local backup directory exists
+      ansible.builtin.file:
+        path: "{{ backup_folder }}"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      run_once: true
+
+  tasks:
+
+    # MikroTik backup
+    - name: Export MikroTik configuration
+      when: inventory_hostname in groups['mikrotik']
+      community.routeros.command:
+        commands:
+          - '/export'
+      register: mikrotik_output
+
+    - name: Save MikroTik configuration locally
+      when: inventory_hostname in groups['mikrotik']
+      local_action:
+        module: copy
+        content: "{{ mikrotik_output.stdout[0] }}"
+        dest: "{{ backup_folder }}/mikrotik-{{ inventory_hostname }}.rsc"
+
+    # pfSense backup
+    - name: Download pfSense config.xml
+      when: inventory_hostname in groups['pfsense']
+      ansible.builtin.slurp:
+        src: "/cf/conf/config.xml"
+      register: pfsense_output
+
+    - name: Save pfSense configuration locally
+      when: inventory_hostname in groups['pfsense']
+      local_action:
+        module: copy
+        content: "{{ pfsense_output.content | b64decode }}"
+        dest: "{{ backup_folder }}/pfsense-{{ inventory_hostname }}.xml"
